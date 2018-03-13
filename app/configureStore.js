@@ -7,8 +7,28 @@ import { fromJS } from 'immutable';
 import { routerMiddleware } from 'react-router-redux';
 import createSagaMiddleware from 'redux-saga';
 import createReducer from './reducers';
+import { persistStore, persistReducer } from 'redux-persist';
+import storageSession from 'redux-persist/lib/storage/session';
+import immutableTransform from 'redux-persist-transform-immutable';
+import storage from 'redux-persist/lib/storage' ;
 
 const sagaMiddleware = createSagaMiddleware();
+
+// const persistConfig = {
+//   transforms: [immutableTransform()],
+//   key: 'root',
+//   storage: storageSession,
+// };
+
+const persistConfig = {
+  key: 'root',
+  storage,
+};
+
+// const rootReducers = createReducer();
+// const rootReducers = createReducer;
+
+const persistedReducer = persistReducer(persistConfig, createReducer);
 
 export default function configureStore(initialState = {}, history) {
   // Create the store with two middlewares
@@ -37,11 +57,19 @@ export default function configureStore(initialState = {}, history) {
       : compose;
   /* eslint-enable */
 
+  // const store = createStore(
+  //   createReducer(),
+  //   fromJS(initialState),
+  //   composeEnhancers(...enhancers)
+  // );
+
   const store = createStore(
-    createReducer(),
+    persistedReducer, // this line used to use createReducer() method
     fromJS(initialState),
-    composeEnhancers(...enhancers)
+    composeEnhancers(...enhancers),
   );
+
+
 
   // Extensions
   store.runSaga = sagaMiddleware.run;
@@ -56,5 +84,9 @@ export default function configureStore(initialState = {}, history) {
     });
   }
 
-  return store;
+  const persistor = persistStore(store);
+
+  return { persistor, store };
+
+  // return store;
 }

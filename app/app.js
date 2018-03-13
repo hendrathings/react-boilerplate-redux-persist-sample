@@ -10,12 +10,24 @@ import 'babel-polyfill';
 
 // Import all the third party stuff
 import React from 'react';
+
+// Added below
+import { PersistGate } from 'redux-persist/es/integration/react';
+
 import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
-import { ConnectedRouter } from 'react-router-redux';
+import { applyRouterMiddleware, Router, Route } from 'react-router';
+import { Switch } from 'react-router-dom';
+import { browserHistory, rootRoute, ConnectedRouter } from 'react-router-redux';
+import { useScroll } from 'react-router-scroll';
 import FontFaceObserver from 'fontfaceobserver';
-import createHistory from 'history/createBrowserHistory';
+import { createHistory } from 'history';
 import 'sanitize.css/sanitize.css';
+import Ajung from './ajung';
+
+import HomePage from 'containers/HomePage/Loadable';
+import FeaturePage from 'containers/FeaturePage/Loadable';
+import NotFoundPage from 'containers/NotFoundPage/Loadable';
 
 // Import root app
 import App from 'containers/App';
@@ -63,21 +75,55 @@ openSansObserver.load().then(() => {
 // Create redux store with history
 const initialState = {};
 const history = createHistory();
-const store = configureStore(initialState, history);
+// const store = configureStore(initialState, history);
 const MOUNT_NODE = document.getElementById('app');
 
-const render = (messages) => {
+// Line below used to define just store but now we are defining persistor and store
+const { persistor, store } = configureStore(initialState, browserHistory);
+
+// todo: 1. comment this
+const render = () => {
   ReactDOM.render(
     <Provider store={store}>
-      <LanguageProvider messages={messages}>
-        <ConnectedRouter history={history}>
-          <App />
-        </ConnectedRouter>
-      </LanguageProvider>
+      <PersistGate loading={null} persistor={persistor}>
+        <Router
+          history={history}
+          routes={rootRoute}
+          render={
+            applyRouterMiddleware(useScroll())
+          }
+        >
+          <Route path="/" component={Ajung}></Route>
+        </Router>
+      </PersistGate>
     </Provider>,
     MOUNT_NODE
   );
 };
+
+// todo: 2 uncomment this
+// const render = () => {
+//   ReactDOM.render(
+//     <Provider store={store}>
+//       <PersistGate loading={null} persistor={persistor}>
+//         <Router
+//           history={history}
+//           routes={rootRoute}
+//           render={
+//             applyRouterMiddleware(useScroll())
+//           }
+//         >
+//           <Switch>
+//             <Route exact path="/" component={HomePage} />
+//             <Route path="/features" component={FeaturePage} />
+//             <Route path="" component={NotFoundPage} />
+//           </Switch>
+//         </Router>
+//       </PersistGate>
+//     </Provider>,
+//     MOUNT_NODE
+//   );
+// };
 
 if (module.hot) {
   // Hot reloadable React components and translation json files
